@@ -1,12 +1,12 @@
-from logging import DEBUG, getLogger, StreamHandler
+from logging import DEBUG, Formatter, getLogger, StreamHandler
 from matplotlib.pyplot import figure, contour, colorbar, show
-from numba import jit
+from numba import njit
 from numpy import meshgrid, linspace, sqrt, array
 from sys import stdout
 from time import process_time, perf_counter
 
 
-@jit(nopython=True)
+@njit(nogil=True)
 def gravity_potential(m1: float, m2: float, m2_orbital_radius: float,
                       x_points: array, y_points: array) -> array:
     """
@@ -28,14 +28,18 @@ def gravity_potential(m1: float, m2: float, m2_orbital_radius: float,
     """
 
     if m1 <= 0:
-        raise ValueError(f"The value of m1 must be positive, received {m1}")
+        raise ValueError(f"The value of m1 was non-positive")
 
     if m2 <= 0:
-        raise ValueError(f"The value of m2 must be positive, received {m2}")
+        raise ValueError(f"The value of m2 was non-positive")
 
     if m2 > m1:
-        raise ValueError(f" The value of m1 must be positive but less than or equal to m2.\n"
-                         f" I.e. the ratio of m2 to m1 must be in (0, 1], received {m2/m1}")
+        raise ValueError(f" The ratio of m2 to m1 was greater than 1")
+
+    # Note that without the numba JIT compiler, the exception messages should be written with formatted strings or
+    # preferably f-strings so that the message contains the values of the parameters received that caused the
+    # exception to be thrown. The reason for the choice to avoid using string formatting is because it is not supported
+    # by Numba's JIT compiler without having to use object-mode, which is often no faster than standard Python
 
     gravitational_constant = 1
 
@@ -60,21 +64,26 @@ def main() -> None:
     grid_x, grid_y = meshgrid(linspace(-1.5, 1.5, plot_length), linspace(-1.5, 1.5, plot_length))
 
     # Configure logger, with the scope name used as the logger name
+    Formatter('[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s', '%m-%d %H:%M:%S')
     log = getLogger(__name__)
     log.setLevel(DEBUG)
     log.addHandler(StreamHandler(stdout))
 
+    # find the z-coordinate at each grid point corresponding to the gravitational potential field up to a factor of
+    # 1/m where m is the mass of the smaller third object. The time taken to do so will be logged
     start_elapsed = perf_counter()
     start_process = process_time()
     grid_z = gravity_potential(large_mass, second_mass, orbital_radius, grid_x, grid_y)
-    figure(figsize=(10, 10), dpi=100)
-    contour(grid_x, grid_y, grid_z, 500)
-    colorbar()
-    show()
     end_elapsed = perf_counter()
     end_process = process_time()
     log.info(f"Elapsed time: {end_elapsed - start_elapsed}")
     log.info(f"Process time: {end_process - start_process}")
+
+
+    figure(figsize=(10, 10), dpi=100)
+    contour(grid_x, grid_y, grid_z, 500)
+    colorbar()
+    show()
 
 
 if __name__ == "__main__":
