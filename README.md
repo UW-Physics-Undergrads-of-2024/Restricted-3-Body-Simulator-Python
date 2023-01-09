@@ -3,7 +3,7 @@
 Create a Windows desktop app that generates a plot of a simulated gravitational field from a restricted three body problem. The plot will use colour gradients to visualize the magnitude of the gravitational potential of the negligible mass and the trajectory it will take.
 
 ## [License](https://github.com/zhanjack822/Restricted-3-Body-Simulator/blob/master/LICENSE)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 ```
     Restricted 3 Body Simulator is a desktop app that simulates the gravitational potential 
